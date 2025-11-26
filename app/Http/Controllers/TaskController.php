@@ -27,12 +27,16 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
+        $userId = $request->user()->id;
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:255',
             'status' => 'required|in:pending,in_progress,completed',
             'due_date' => 'required|date',
         ]);
+
+        $validated['user_id'] = $userId;
 
         $task = $request->user()->tasks()->create($validated);
 
@@ -65,9 +69,11 @@ class TaskController extends Controller
     /**
      * Update Task
      */
-    public function update(Request $request, Task $task)
+    public function update(Request $request, $id)
     {
-        if($request->user()->id !== $task->user_id){
+        $task = Task::findOrFail($id);
+
+        if ((int) $request->user()->id !== (int) $task->user_id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
@@ -75,27 +81,29 @@ class TaskController extends Controller
         }
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string|max:255',
-            'status' => 'required|in:pending,in_progress,completed',
-            'due_date' => 'required|date',
+        'title' => 'sometimes|string|max:255',
+        'description' => 'sometimes|string|max:255',
+        'status' => 'sometimes|in:pending,in_progress,completed',
+        'due_date' => 'sometimes|date',
         ]);
 
         $task->update($validated);
 
         return response()->json([
             'success' => true,
-            'message' => 'Task updated successfully',
-            'data' => $task
+            'message' => 'Task retrieved successfully',
+            'data' => $task->toArray()
         ], 200);
     }
 
     /**
      * Delete Task
      */
-    public function destroy(Request $request, Task $task)
+    public function destroy(Request $request, $id)
     {
-        if($request->user()->id !== $task->user_id){
+        $task = Task::findOrFail($id);
+
+        if((int) $request->user()->id !== (int) $task->user_id){
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized'
