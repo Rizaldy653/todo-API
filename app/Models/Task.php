@@ -19,4 +19,9 @@ class Task extends Model
     protected $casts = [
         'due_date' => 'date'
     ];
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
 }
